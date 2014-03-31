@@ -3,19 +3,19 @@
 
 
 
-class Empresas extends \Phalcon\Mvc\Model
+class Saludproyecto extends \Phalcon\Mvc\Model
 {
 
     /**
      *
      * @var integer
      */
-    public $idEmpresa;
+    public $idsaludProyecto;
      
     /**
      *
      * @var string
      */
-    public $nombreEmpresa;
+    public $saludProyecto;
      
 }
