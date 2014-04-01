@@ -215,7 +215,9 @@ $response ->setJsonContent(array(
 'status'=>'USER-FOUND',
 'user'=>array(
 'id' => $users->idUsers,
-'rol' =>$users->rol
+'rol' =>$users->rol,
+'bp' => $users ->bP
+
     )
 
     ));
@@ -226,6 +228,8 @@ $response ->setJsonContent(array(
 return $response;
 
 });
+
+
 
 $app->post('/proyecto/Planificacion', function() use ($app) {
     $request = new \Phalcon\Http\Request();
@@ -242,7 +246,7 @@ $app->post('/proyecto/Planificacion', function() use ($app) {
     $planificacion->estadoMes2=$request->get("estadoMes2");
     $planificacion->estadoMes3=$request->get("estadoMes3");
     $planificacion->estadoMes4=$request->get("estadoMes4");
-    $planificacion->fechacreacion=date('Y-m-d H:i:s');
+    $planificacion->fechacreacion=date('Y-m-d');
     $planificacion->activo =1;
 
     //Elimina los registros actuales
@@ -277,6 +281,51 @@ $app->post('/proyecto/Planificacion', function() use ($app) {
 
 });
 
+$app->get('/proyecto/{id}', function($id) use ($app) {
+    $response = new Phalcon\Http\Response();
+    $proyecto = Proyecto::findFirst("idProyecto=" . $id);
+    if ($proyecto != false) {
+
+        $data[] = array(
+            'id' => $proyecto->idProyecto,
+            'avance' => $proyecto ->avance,
+            'comentario' => $proyecto->comentarioAlcance,
+            'saludProyecto' => $proyecto ->idSaludProyecto,
+            'etapaProyecto' =>$proyecto ->idEtapaProyecto,
+            'estadoProyecto' => $proyecto->idStatusProyecto,
+            'desviacionPresupuesto' => $proyecto ->desviacionPresupuesto,
+          'desviacionAlcance' =>  $proyecto ->desviacionAlcance,
+            'desviacionTiempo' =>$proyecto ->desviacionTiempo
+        );
+
+        $response ->setJsonContent(array(
+            'status'=>'FOUND',
+            'proyecto'=> $data
+
+        ));
+
+
+    }
+    else
+    {
+
+
+        $response->setStatusCode(409, "Conflict");
+
+        //Send errors to the client
+        $errors = array();
+        foreach ($proyecto->getMessages() as $message) {
+            $errors[] = $message->getMessage();
+        }
+
+        $response->setJsonContent(array('status' => 'ERROR', 'messages' => $errors));
+
+    }
+
+    return $response;
+
+});
+
 
 $app->post('/proyecto', function() use ($app) {
 
@@ -305,8 +354,8 @@ $app->post('/proyecto', function() use ($app) {
      $proyecto ->idEtapaProyecto= $request->get("etapaProyecto");
      $proyecto ->idStatusProyecto = 1; //$request->get("estadoProyecto");
     $proyecto ->jefeProyecto = $request->get("jefeProyecto");
-     $proyecto ->bp = $request->get("bP");
-
+     $proyecto -> bpProyecto = $request->get("jefeProyecto");  //$request->get("bP");
+$proyecto -> idTipoEstrategiaProyecto =1;
      $proyecto ->desviacionPresupuesto = 0;
      $proyecto ->desviacionAlcance = 0;
      $proyecto ->desviacionTiempo =0;
@@ -454,7 +503,7 @@ desviacionTiempo) VALUES
 $app->get('/{User}/Proyectos/Salud', function ($User) use($app){
     $response = new Phalcon\Http\Response();
     // Count employees grouping results by their area
-$group = Proyecto::count(array( "conditions" => "bpProyecto ='".$User ."'","group" => "idSaludProyecto"));
+$group = Proyecto::count(array( "conditions" => "(bpProyecto='" .$User ."' or jefeProyecto= '" .$User ."')","group" => "idSaludProyecto"));
     $data = array();
     if (!empty($group)) {
 foreach ($group as $row) {
@@ -487,7 +536,7 @@ $app->get('/{User}/Proyectos/listadoBP', function ($User) use($app){
 
     $phql = "select p.idProyecto, p.nombreProyecto,p.beneficios,e.nombreEmpresa, p.costoOneoff,p.costoOnGoing,s.saludProyecto,es.statusProyecto, ep.etapaProyecto,
      p.desviacionPresupuesto,p.desviacionAlcance,p.desviacionTiempo, epro.estrategiaProyecto, p.comentarioAlcance from Proyecto p JOIN Empresas e JOIN Saludproyecto s JOIN Statusproyecto es JOIN Etapaproyecto ep JOIN estrategiaProyecto epro
-     where bpProyecto='" .$User ."'";
+     where (bpProyecto='" .$User ."' or jefeProyecto= '" .$User ."')";
 
     $proyectos = $app->modelsManager->executeQuery($phql);
 
@@ -532,7 +581,7 @@ $app->get('/{User}/Proyectos/listadoProgramacion', function ($User) use($app){
 
     $phql = "select p.nombreProyecto, pl.mes1, pl.mes2, pl.mes3, pl.mes4, e.etapaProyecto a, e2.etapaProyecto b, e3.etapaProyecto c, e4.etapaProyecto d from  Planificacion pl join Proyecto p join etapaproyecto e on pl.estadoMes1=e.idetapaProyecto
     join etapaproyecto e2 on pl.estadoMes2=e2.idetapaProyecto join etapaproyecto e3 on pl.estadoMes3=e3.idetapaProyecto join etapaproyecto e4 on pl.estadoMes4=e4.idetapaProyecto
-    where p.bpProyecto='". $User ."' and pl.activo=1";
+    where (bpProyecto='" .$User ."' or jefeProyecto= '" .$User ."') and pl.activo=1";
     $programacion = $app->modelsManager->executeQuery($phql);
 
     $data = array();
@@ -570,7 +619,7 @@ $app->get('/{User}/Proyectos/listadoProgramacion', function ($User) use($app){
 
 $app->get('/{User}/Proyectos/porTipo', function ($user) use($app){
     $response = new Phalcon\Http\Response();
-    $phql = "select count(*) as rowcount,idEtapaProyecto, idStatusProyecto from Proyecto where bpProyecto ='".$user .  "' group by idEtapaProyecto, idStatusProyecto ";
+    $phql = "select count(*) as rowcount,idEtapaProyecto, idStatusProyecto from Proyecto where (bpProyecto='" .$user ."' or jefeProyecto= '" .$user ."') group by idEtapaProyecto, idStatusProyecto ";
     $group = $app->modelsManager->executeQuery($phql);
 
     $phql = "select idetapaProyecto,etapaProyecto from Etapaproyecto";
@@ -616,3 +665,46 @@ $app->get('/{User}/Proyectos/porTipo', function ($user) use($app){
     return $response;
 });
 
+
+
+$app->get('/proyecto/{id}/Planificacion', function ($id) use($app){
+
+
+    $phql = "select p.nombreProyecto, pl.mes1, pl.mes2, pl.mes3, pl.mes4, e.etapaProyecto a, e2.etapaProyecto b, e3.etapaProyecto c, e4.etapaProyecto d, pl.fechacreacion from  Planificacion pl join Proyecto p join etapaproyecto e on pl.estadoMes1=e.idetapaProyecto
+    join etapaproyecto e2 on pl.estadoMes2=e2.idetapaProyecto join etapaproyecto e3 on pl.estadoMes3=e3.idetapaProyecto join etapaproyecto e4 on pl.estadoMes4=e4.idetapaProyecto
+    where (p.idProyecto= '" .$id ."')";
+    $programacion = $app->modelsManager->executeQuery($phql);
+
+    $data = array();
+    $response = new Phalcon\Http\Response();
+    $response->setContentType('application/json', 'UTF-8');
+    if (!empty($programacion)) {
+        foreach ($programacion as $prog) {
+
+            $data[] = array(
+                'fechaCreacion' => $prog->nombreProyecto,
+
+                'mes1' => $prog->mes1,
+                'mes2' => $prog->mes2,
+                'mes3' => $prog->mes3,
+                'mes4' => $prog->mes4,
+                'estadoMes1' => $prog->a,
+                'estadoMes2' => $prog->b,
+                'estadoMes3' => $prog->c,
+                'estadoMes4' => $prog->d,
+                'fechacreacion'=>$prog->fechacreacion
+
+            );
+
+        }
+        $response ->setJsonContent(array(
+            'status'=>'FOUND',
+            'programacion'=>$data
+        ));
+    }
+    else
+    {
+        $response->setJsonContent(array('status'=>'NOT-FOUND'));
+    }
+    return $response;
+});
