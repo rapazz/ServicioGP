@@ -91,7 +91,7 @@ class Planificacion extends \Phalcon\Mvc\Model
         $this->belongsTo("estadoMes1", "Etapaproyecto", "idetapaProyecto");
         $this->belongsTo("estadoMes2", "Etapaproyecto", "idetapaProyecto");
         $this->belongsTo("estadoMes3", "Etapaproyecto", "idetapaProyecto");
-        $this->belongsTo("estadoMes4", "Etapaproyecto", "idetapaProyecto");
+       // $this->belongsTo("estadoMes4", "Etapaproyecto", "idetapaProyecto");
 
     }
 }

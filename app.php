@@ -286,21 +286,43 @@ $app->get('/proyecto/{id}', function($id) use ($app) {
     $proyecto = Proyecto::findFirst("idProyecto=" . $id);
     if ($proyecto != false) {
 
-        $data[] = array(
+        $data = array(
             'id' => $proyecto->idProyecto,
+            'nombreProyecto' =>$proyecto->nombreProyecto,
+            'descripcionProyecto'=>$proyecto->descripcionProyecto,
+            'jefeProyecto'=>$proyecto ->jefeProyecto,
+            'bpProyecto'=>$proyecto->bpProyecto,
+            'fechaSolicitud'=>$proyecto->fechaSolicitud,
+            'fechaTermino'=>$proyecto->fechaTermino,
+            'nombreSolicitante'=>$proyecto->nombreSolicitante,
+            'idEmpresa'=>$proyecto->idEmpresa,
+            'nombreEmpresa'=>$proyecto->Empresas->nombreEmpresa,
+            'financiadoPor'=>$proyecto->financiadoPor,
+           'areaCliente'=>$proyecto->areaCliente,
+            'costoOneOff'=>$proyecto->costoOneOff,
+            'costoOnGoing'=>$proyecto->costoOnGoing,
+            'beneficios'=>$proyecto->beneficios,
+            'idStatusProyecto'=>$proyecto->idStatusProyecto,
+            'estatusProyecto'=>$proyecto->Statusproyecto->statusProyecto,
+            'idEtapaProyecto'=>$proyecto->idEtapaProyecto,
+            'etapaProyecto' =>$proyecto->Etapaproyecto->etapaProyecto,
+            'idSaludProyecto'=>$proyecto->idSaludProyecto,
+            'saludProyecto'=>$proyecto->Saludproyecto->saludProyecto,
+            'idTipoEstrategiaProyecto'=>$proyecto->idTipoEstrategiaProyecto,
+            'estrategiaProyecto'=>$proyecto->estrategiaProyecto->estrategiaProyecto,
             'avance' => $proyecto ->avance,
             'comentario' => $proyecto->comentarioAlcance,
-            'saludProyecto' => $proyecto ->idSaludProyecto,
-            'etapaProyecto' =>$proyecto ->idEtapaProyecto,
-            'estadoProyecto' => $proyecto->idStatusProyecto,
             'desviacionPresupuesto' => $proyecto ->desviacionPresupuesto,
           'desviacionAlcance' =>  $proyecto ->desviacionAlcance,
             'desviacionTiempo' =>$proyecto ->desviacionTiempo
+
+
         );
 
         $response ->setJsonContent(array(
             'status'=>'FOUND',
             'proyecto'=> $data
+
 
         ));
 
@@ -576,11 +598,12 @@ $app->get('/{User}/Proyectos/listadoBP', function ($User) use($app){
     return $response;
 });
 
+
 $app->get('/{User}/Proyectos/listadoProgramacion', function ($User) use($app){
 
 
-    $phql = "select p.nombreProyecto, pl.mes1, pl.mes2, pl.mes3, pl.mes4, e.etapaProyecto a, e2.etapaProyecto b, e3.etapaProyecto c, e4.etapaProyecto d from  Planificacion pl join Proyecto p join etapaproyecto e on pl.estadoMes1=e.idetapaProyecto
-    join etapaproyecto e2 on pl.estadoMes2=e2.idetapaProyecto join etapaproyecto e3 on pl.estadoMes3=e3.idetapaProyecto join etapaproyecto e4 on pl.estadoMes4=e4.idetapaProyecto
+    $phql = "select p.nombreProyecto, pl.mes1, pl.mes2, pl.mes3, pl.mes4, e.etapaProyecto a, e2.etapaProyecto b, e3.etapaProyecto c, e4.etapaProyecto d, pl.activo from  Planificacion pl join Proyecto p join Etapaproyecto e on pl.estadoMes1=e.idetapaProyecto
+    join Etapaproyecto e2 on pl.estadoMes2=e2.idetapaProyecto join Etapaproyecto e3 on pl.estadoMes3=e3.idetapaProyecto join Etapaproyecto e4 on pl.estadoMes4=e4.idetapaProyecto
     where (bpProyecto='" .$User ."' or jefeProyecto= '" .$User ."') and pl.activo=1";
     $programacion = $app->modelsManager->executeQuery($phql);
 
@@ -670,7 +693,7 @@ $app->get('/{User}/Proyectos/porTipo', function ($user) use($app){
 $app->get('/proyecto/{id}/Planificacion', function ($id) use($app){
 
 
-    $phql = "select p.nombreProyecto, pl.mes1, pl.mes2, pl.mes3, pl.mes4, e.etapaProyecto a, e2.etapaProyecto b, e3.etapaProyecto c, e4.etapaProyecto d, pl.fechacreacion from  Planificacion pl join Proyecto p join etapaproyecto e on pl.estadoMes1=e.idetapaProyecto
+    $phql = "select p.nombreProyecto, pl.mes1, pl.mes2, pl.mes3, pl.mes4, e.etapaProyecto a, e2.etapaProyecto b, e3.etapaProyecto c, e4.etapaProyecto d, pl.fechacreacion,pl.activo from  Planificacion pl join Proyecto p join etapaproyecto e on pl.estadoMes1=e.idetapaProyecto
     join etapaproyecto e2 on pl.estadoMes2=e2.idetapaProyecto join etapaproyecto e3 on pl.estadoMes3=e3.idetapaProyecto join etapaproyecto e4 on pl.estadoMes4=e4.idetapaProyecto
     where (p.idProyecto= '" .$id ."')";
     $programacion = $app->modelsManager->executeQuery($phql);
@@ -692,7 +715,8 @@ $app->get('/proyecto/{id}/Planificacion', function ($id) use($app){
                 'estadoMes2' => $prog->b,
                 'estadoMes3' => $prog->c,
                 'estadoMes4' => $prog->d,
-                'fechacreacion'=>$prog->fechacreacion
+                'fechacreacion'=>$prog->fechacreacion,
+                'activo' =>$prog->activo
 
             );
 

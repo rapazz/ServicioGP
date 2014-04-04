@@ -164,14 +164,21 @@ class Proyecto extends \Phalcon\Mvc\Model
      
 public $desviacionTiempo;
 
+
+    public function getPlanificacion($parameters=null)
+    {
+        return $this->getRelated('Planificacion', $parameters);
+    }
+
 public function initialize()
 {
     $this->belongsTo("idEmpresa", "Empresas", "idEmpresa");
     $this->belongsTo("idEtapaProyecto", "Etapaproyecto", "idetapaProyecto");
-    $this->belongsTo("idStatusProyecto", "Statusproyecto", "idStatusProyecto");
+    $this->belongsTo("idStatusProyecto", "Statusproyecto", "idstatusProyecto");
     $this->belongsTo("idSaludProyecto", "Saludproyecto", "idsaludProyecto");
     $this->belongsTo("idTipoEstrategiaProyecto", "estrategiaProyecto", "idEstrategia");
 
+    $this->belongsTo("idProyecto", "Planificacion", "idproyecto");
 
 }
 }
