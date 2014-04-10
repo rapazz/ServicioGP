@@ -53,5 +53,13 @@ class Anexos extends \Phalcon\Mvc\Model
      * @var string
      */
     public $Anexoscol;
-     
+
+    public function initialize()
+    {
+        $this->belongsTo("idTipoAnexo", "Tipoadjunto", "idtipoAdjunto");
+
+
+    }
+
+
 }

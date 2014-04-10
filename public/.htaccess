@@ -6,3 +6,7 @@ Options +FollowSymLinks
     RewriteCond %{REQUEST_FILENAME} !-f
     RewriteRule ^(.*)$ index.php?_url=/$1 [QSA,L]
 </IfModule>
+php_value max_execution_time 1000
+ php_value max_input_time 1000
+ php_value post_max_size 100M
+ php_value upload_max_filesize 100M

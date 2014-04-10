@@ -45,6 +45,36 @@ $app->get('/listas/empresa', function () use ($app) {
     return $response;
 });
 
+
+$app->get('/listas/tipoAdjunto', function () use ($app) {
+
+    $tipoAdjunto = Tipoadjunto::find();
+
+    $response = new Phalcon\Http\Response();
+
+    $data = array();
+
+    if (!empty($tipoAdjunto)) {
+        foreach ($tipoAdjunto as $e) {
+            $data[] = array(
+                'id' => $e->idtipoAdjunto,
+                'nombre' => $e->tipoAdjunto
+
+
+            );
+        }
+    }
+    $response ->setJsonContent(array(
+        'status'=>'FOUND',
+        'tipoAdjunto'=>$data
+    ));
+
+    return $response;
+});
+
+
+
+
 $app->get('/listas/estrategiaProyecto', function () use ($app) {
 
 
@@ -349,6 +379,98 @@ $app->get('/proyecto/{id}', function($id) use ($app) {
 });
 
 
+$app->get('/proyecto/{id}/file',function($id) use ($app){
+
+    $anexos = Anexos::find("idProyecto=" . $id);
+
+
+
+    $data = array();
+    $response = new Phalcon\Http\Response();
+    if (!empty($anexos)) {
+        foreach ($anexos as $e) {
+            $data[] = array(
+                'nombre' => $e->nombreAnexo,
+                'url' =>'http://localhost/~mbravo/gestiondeProyectos/ServicioGP/public/'. $e->urlAnexo,
+                'tipo' =>$e->Tipoadjunto->tipoAdjunto
+
+
+            );
+        }
+    }
+    $response ->setJsonContent(array(
+        'status'=>'FOUND',
+        'anexos'=>$data
+    ));
+
+    return $response;
+
+
+});
+
+$app ->post('/proyecto/{id}/file',function($id) use ($app){
+
+    $response = new Phalcon\Http\Response();
+
+   $request =  new \Phalcon\Http\Request();
+
+   if ($request->hasFiles() == true) {
+
+        //$fi = new finfo(FILEINFO_MIME, '../adjuntos/');
+        foreach ($request->getUploadedFiles() as $file) {
+            $objAnexo= json_decode($request->get("myObj"));
+            $anexo = new Anexos();
+            $anexo->idProyecto=$objAnexo->idProyecto;
+            $anexo->idTipoAnexo= $objAnexo->tipoAdjunto;
+            $anexo->activo=1;
+            $anexo->nombreAnexo=$objAnexo->descripcion;
+            $anexo->fechaCreacion =date('Y-m-d H:i:s');
+            $anexo->urlAnexo='/adjuntos/'. $file->getName();
+
+
+
+           $file->moveTo('adjuntos/' . $file->getName());
+
+            if ($anexo->create() != false) {
+                $response->setStatusCode(201, "Created");
+
+
+
+                $response->setJsonContent(array('status' =>'OK'));
+
+            }
+            else
+            {
+
+                $response->setStatusCode(409, "Conflict");
+
+                //Send errors to the client
+                $errors = array();
+                foreach ($anexo->getMessages() as $message) {
+                    $errors[] = $message->getMessage();
+                }
+
+                $response->setJsonContent(array('status' => 'ERROR', 'messages' => $errors));
+
+            }
+
+        }
+
+    }
+else
+{
+    $response->setStatusCode(409, 'No se pudo cargar el archivo');
+
+
+
+}
+
+
+
+    return $response;
+
+});
+
 $app->post('/proyecto', function() use ($app) {
 
     $request = new \Phalcon\Http\Request();
@@ -449,9 +571,9 @@ desviacionTiempo) VALUES
         'fechaCreacion' =>date('Y-m-d H:i:s') ,
         'avance' => $request->get("avance"),
         'comentario' => $request->get("comentario"),
-        'idSaludProyecto' => $request->get("saludProyecto"),
-        'idEtapaProyecto' => $request->get("etapaProyecto"),
-        'idStatusProyecto' => $request->get("estadoProyecto"),
+        'idSaludProyecto' => $request->get("idSaludProyecto"),
+        'idEtapaProyecto' => $request->get("idEtapaProyecto"),
+        'idStatusProyecto' => $request->get("idStatusProyecto"),
         'desviacionPresupuesto' => $request->get("desviacionPresupuesto"),
         'desviacionAlcance' => $request->get("desviacionAlcance"),
         'desviacionTiempo' => $request->get("desviacionTiempo")
@@ -470,9 +592,9 @@ desviacionTiempo) VALUES
 
         $proyecto ->avance =$request->get("avance");
         $proyecto -> comentarioAlcance = $request->get("comentario");
-         $proyecto ->idSaludProyecto = $request->get("saludProyecto");
-         $proyecto ->idEtapaProyecto= $request->get("etapaProyecto");
-         $proyecto ->idStatusProyecto = $request->get("estadoProyecto");
+         $proyecto ->idSaludProyecto = $request->get("idSaludProyecto");
+         $proyecto ->idEtapaProyecto= $request->get("idEtapaProyecto");
+         $proyecto ->idStatusProyecto = $request->get("idStatusProyecto");
          $proyecto ->desviacionPresupuesto = $request->get("desviacionPresupuesto");
          $proyecto ->desviacionAlcance = $request->get("desviacionAlcance");
          $proyecto ->desviacionTiempo = $request->get("desviacionTiempo");
