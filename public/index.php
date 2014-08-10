@@ -38,6 +38,9 @@ try {
 	 */
 	$app->handle();
 
+
+
+
 } catch (Phalcon\Exception $e) {
 	echo $e->getMessage();
 } catch (PDOException $e){

@@ -79,4 +79,16 @@ class Historialproyecto extends \Phalcon\Mvc\Model
      */
     public $desviacionTiempo;
 
+
+
+
+
+public function initialize()
+{
+    $this->belongsTo("idEtapaProyecto", "Etapaproyecto", "idetapaProyecto");
+    $this->belongsTo("idStatusProyecto", "Statusproyecto", "idstatusProyecto");
+    $this->belongsTo("idSaludProyecto", "Saludproyecto", "idsaludProyecto");
+
+
+}
 }

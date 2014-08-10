@@ -190,42 +190,6 @@ $app->get('/listas/etapaProyecto', function () use($app){
 
 });
 
-$app->get('/{User}/Proyectos', function ($User) use($app){
-
-
-    $phql = "select p.idProyecto, p.nombreProyecto,e.nombreEmpresa,p.fechaTermino, p.costoOneoff,p.costoOnGoing,s.saludProyecto,es.statusProyecto, ep.etapaProyecto from Proyecto p JOIN Empresas e JOIN Saludproyecto s JOIN Statusproyecto es JOIN Etapaproyecto ep where jefeProyecto='" .$User ."'";
-    $proyectos = $app->modelsManager->executeQuery($phql);
-
-    $data = array();
-    $response = new Phalcon\Http\Response();
-    $response->setContentType('application/json', 'UTF-8');
-    if (!empty($proyectos)) {
-        foreach ($proyectos as $proyecto) {
-
-            $data[] = array(
-                'idProyecto' => $proyecto->idProyecto,
-                'nombreProyecto' => $proyecto->nombreProyecto,
-                'nombreEmpresa' => $proyecto->nombreEmpresa,
-                'fechaTermino' => $proyecto->fechaTermino,
-                'costoOneoff' => $proyecto->costoOneoff,
-                'costoOneGoing' => $proyecto->costoOnGoing,
-                'saludProyecto' => $proyecto->saludProyecto,
-                'statusProyecto' => $proyecto->statusProyecto,
-                'etapaProyecto' => $proyecto->etapaProyecto
-            );
-
-        }
-        $response ->setJsonContent(array(
-            'status'=>'FOUND',
-            'proyectos'=>$data
-        ));
-    }
-    else
-    {
-        $response->setJsonContent(array('status'=>'NOT-FOUND'));
-    }
-    return $response;
-});
 
 
 
@@ -239,8 +203,15 @@ $app->get('/Users/{email}', function ($email) use($app){
      $response = new Phalcon\Http\Response(); 
 
    if (!$users){
+ $response->setStatusCode(401, "Usuario no Valido");
 $response->setJsonContent(array('status'=>'USER-NOT-FOUND'));
    }else {
+       $response->setStatusCode(200, "ok");
+ // Crea tokens de usuario
+$response->setHeader('token',$app->security->getToken() );
+ $response->setHeader('tokenKey',$app->security->getTokenKey() );
+
+
 $response ->setJsonContent(array(
 'status'=>'USER-FOUND',
 'user'=>array(
@@ -249,6 +220,8 @@ $response ->setJsonContent(array(
 'bp' => $users ->bP
 
     )
+
+
 
     ));
 
@@ -311,72 +284,11 @@ $app->post('/proyecto/Planificacion', function() use ($app) {
 
 });
 
-$app->get('/proyecto/{id}', function($id) use ($app) {
-    $response = new Phalcon\Http\Response();
-    $proyecto = Proyecto::findFirst("idProyecto=" . $id);
-    if ($proyecto != false) {
-
-        $data = array(
-            'id' => $proyecto->idProyecto,
-            'nombreProyecto' =>$proyecto->nombreProyecto,
-            'descripcionProyecto'=>$proyecto->descripcionProyecto,
-            'jefeProyecto'=>$proyecto ->jefeProyecto,
-            'bpProyecto'=>$proyecto->bpProyecto,
-            'fechaSolicitud'=>$proyecto->fechaSolicitud,
-            'fechaTermino'=>$proyecto->fechaTermino,
-            'nombreSolicitante'=>$proyecto->nombreSolicitante,
-            'idEmpresa'=>$proyecto->idEmpresa,
-            'nombreEmpresa'=>$proyecto->Empresas->nombreEmpresa,
-            'financiadoPor'=>$proyecto->financiadoPor,
-           'areaCliente'=>$proyecto->areaCliente,
-            'costoOneOff'=>$proyecto->costoOneOff,
-            'costoOnGoing'=>$proyecto->costoOnGoing,
-            'beneficios'=>$proyecto->beneficios,
-            'idStatusProyecto'=>$proyecto->idStatusProyecto,
-            'estatusProyecto'=>$proyecto->Statusproyecto->statusProyecto,
-            'idEtapaProyecto'=>$proyecto->idEtapaProyecto,
-            'etapaProyecto' =>$proyecto->Etapaproyecto->etapaProyecto,
-            'idSaludProyecto'=>$proyecto->idSaludProyecto,
-            'saludProyecto'=>$proyecto->Saludproyecto->saludProyecto,
-            'idTipoEstrategiaProyecto'=>$proyecto->idTipoEstrategiaProyecto,
-            'estrategiaProyecto'=>$proyecto->estrategiaProyecto->estrategiaProyecto,
-            'avance' => $proyecto ->avance,
-            'comentario' => $proyecto->comentarioAlcance,
-            'desviacionPresupuesto' => $proyecto ->desviacionPresupuesto,
-          'desviacionAlcance' =>  $proyecto ->desviacionAlcance,
-            'desviacionTiempo' =>$proyecto ->desviacionTiempo
 
 
-        );
-
-        $response ->setJsonContent(array(
-            'status'=>'FOUND',
-            'proyecto'=> $data
 
 
-        ));
 
-
-    }
-    else
-    {
-
-
-        $response->setStatusCode(409, "Conflict");
-
-        //Send errors to the client
-        $errors = array();
-        foreach ($proyecto->getMessages() as $message) {
-            $errors[] = $message->getMessage();
-        }
-
-        $response->setJsonContent(array('status' => 'ERROR', 'messages' => $errors));
-
-    }
-
-    return $response;
-
-});
 
 
 $app->get('/proyecto/{id}/file',function($id) use ($app){
@@ -471,7 +383,7 @@ else
 
 });
 
-$app->post('/proyecto', function() use ($app) {
+$app->post('/proyectos', function() use ($app) {
 
     $request = new \Phalcon\Http\Request();
     $response = new Phalcon\Http\Response();
@@ -531,117 +443,7 @@ $proyecto -> idTipoEstrategiaProyecto =1;
 });
 
 
-$app->post('/proyecto/avance/{id}', function($id) use ($app) {
 
-
-
-
-    $request = new \Phalcon\Http\Request();
-
-
-
-   // $avance = $app->request->getJsonRawBody();
-    // Update Proyecto
-
-
-$phql = "INSERT INTO Historialproyecto
-(idProyecto,
-fechaCreacion,
-avance,
-comentario,
-idSaludProyecto,
-idEtapaProyecto,
-idStatusProyecto,
-desviacionPresupuesto,
-desviacionAlcance,
-desviacionTiempo) VALUES
-(:idProyecto:,
-:fechaCreacion:,
-:avance:,
-:comentario:,
-:idSaludProyecto:,
-:idEtapaProyecto:,
-:idStatusProyecto:,
-:desviacionPresupuesto:,
-:desviacionAlcance:,
-:desviacionTiempo:)";
-    //insert Historial
-    $status = $app->modelsManager->executeQuery($phql, array(
-        'idProyecto' => $id,
-        'fechaCreacion' =>date('Y-m-d H:i:s') ,
-        'avance' => $request->get("avance"),
-        'comentario' => $request->get("comentario"),
-        'idSaludProyecto' => $request->get("idSaludProyecto"),
-        'idEtapaProyecto' => $request->get("idEtapaProyecto"),
-        'idStatusProyecto' => $request->get("idStatusProyecto"),
-        'desviacionPresupuesto' => $request->get("desviacionPresupuesto"),
-        'desviacionAlcance' => $request->get("desviacionAlcance"),
-        'desviacionTiempo' => $request->get("desviacionTiempo")
-
-    ));
-
-    $response = new Phalcon\Http\Response();
-
-    //Check if the insertion was successful
-    if ($status->success() == true) {
-
-        $proyecto = Proyecto::findFirst("idProyecto=" . $id);
-
-        if ($proyecto != false) {
-
-
-        $proyecto ->avance =$request->get("avance");
-        $proyecto -> comentarioAlcance = $request->get("comentario");
-         $proyecto ->idSaludProyecto = $request->get("idSaludProyecto");
-         $proyecto ->idEtapaProyecto= $request->get("idEtapaProyecto");
-         $proyecto ->idStatusProyecto = $request->get("idStatusProyecto");
-         $proyecto ->desviacionPresupuesto = $request->get("desviacionPresupuesto");
-         $proyecto ->desviacionAlcance = $request->get("desviacionAlcance");
-         $proyecto ->desviacionTiempo = $request->get("desviacionTiempo");
-
-            if ($proyecto->update() != false) {
-                $response->setStatusCode(201, "Created");
-
-
-
-                $response->setJsonContent(array('status' => 'OK'));
-
-            }
-            else
-            {
-
-                $response->setStatusCode(409, "Conflict");
-
-                //Send errors to the client
-                $errors = array();
-                foreach ($status->getMessages() as $message) {
-                    $errors[] = $message->getMessage();
-                }
-
-                $response->setJsonContent(array('status' => 'ERROR', 'messages' => $errors));
-
-            }
-         }
-
-        //Change the HTTP status
-
-
-    } else {
-
-        //Change the HTTP status
-        $response->setStatusCode(409, "Conflict");
-
-        //Send errors to the client
-        $errors = array();
-        foreach ($status->getMessages() as $message) {
-            $errors[] = $message->getMessage();
-        }
-
-        $response->setJsonContent(array('status' => 'ERROR', 'messages' => $errors));
-    }
-
-    return $response;
-});
 
 //Carga Proyecto por salud para el dashboard
 $app->get('/{User}/Proyectos/Salud', function ($User) use($app){
@@ -817,7 +619,7 @@ $app->get('/proyecto/{id}/Planificacion', function ($id) use($app){
 
     $phql = "select p.nombreProyecto, pl.mes1, pl.mes2, pl.mes3, pl.mes4, e.etapaProyecto a, e2.etapaProyecto b, e3.etapaProyecto c, e4.etapaProyecto d, pl.fechacreacion,pl.activo from  Planificacion pl join Proyecto p join etapaproyecto e on pl.estadoMes1=e.idetapaProyecto
     join etapaproyecto e2 on pl.estadoMes2=e2.idetapaProyecto join etapaproyecto e3 on pl.estadoMes3=e3.idetapaProyecto join etapaproyecto e4 on pl.estadoMes4=e4.idetapaProyecto
-    where (p.idProyecto= '" .$id ."')";
+    where (p.idProyecto= '" .$id ."') order by idPlanificacion";
     $programacion = $app->modelsManager->executeQuery($phql);
 
     $data = array();
@@ -854,3 +656,309 @@ $app->get('/proyecto/{id}/Planificacion', function ($id) use($app){
     }
     return $response;
 });
+
+
+//NUEVOS METODOS
+
+
+// Busca un proyecto  en base al ID
+
+$app->get('/proyectos/{id}', function($id) use ($app) {
+
+    $response = new Phalcon\Http\Response();
+    $response->setContentType('application/json', 'UTF-8');
+    $request = new \Phalcon\Http\Request();
+
+    $token = $request->getHeader('TOKEN');
+    $tokenKey = $request->getHeader('TOKENKEY');
+
+  //  $token ='caa8a37dea732db5753027f80f3e4ed2';
+  //  $tokenKey=null;
+
+
+
+    if (!($app->security->checkToken($tokenKey,$token)) || $token==null || $tokenKey==null)
+    {
+        $response->setStatusCode(401,'Usuario sin autorizacion');
+        $response->setJsonContent(array('status' => 'Error', 'messages' => 'Sin Autorizacion'));
+return $response;
+    }
+
+// Proyecto
+    $proyecto = Proyecto::findFirst("idProyecto=" . $id);
+
+
+//programacion
+    $phql = "select p.nombreProyecto, pl.mes1, pl.mes2, pl.mes3, pl.mes4, e.etapaProyecto a, e2.etapaProyecto b, e3.etapaProyecto c, e4.etapaProyecto d, pl.fechacreacion,pl.activo from  Planificacion pl join Proyecto p join etapaproyecto e on pl.estadoMes1=e.idetapaProyecto
+    join etapaproyecto e2 on pl.estadoMes2=e2.idetapaProyecto join etapaproyecto e3 on pl.estadoMes3=e3.idetapaProyecto join etapaproyecto e4 on pl.estadoMes4=e4.idetapaProyecto
+    where (p.idProyecto= '" .$id ."')";
+    $programacion = $app->modelsManager->executeQuery($phql);
+
+    $dataProgramacion = array();
+
+
+
+
+    if (!empty($programacion)) {
+        foreach ($programacion as $prog) {
+
+            $dataProgramacion[] = array(
+                'fechaCreacion' => $prog->nombreProyecto,
+
+                'mes1' => $prog->mes1,
+                'mes2' => $prog->mes2,
+                'mes3' => $prog->mes3,
+                'mes4' => $prog->mes4,
+                'estadoMes1' => $prog->a,
+                'estadoMes2' => $prog->b,
+                'estadoMes3' => $prog->c,
+                'estadoMes4' => $prog->d,
+                'fechacreacion'=>$prog->fechacreacion,
+                'activo' =>$prog->activo
+
+            );
+
+        }
+
+    }
+
+
+//Anexos
+    $anexos = Anexos::find("idProyecto=" . $id);
+    $dataAnexos = array();
+    $response = new Phalcon\Http\Response();
+    $request = new \Phalcon\Http\Request();
+    if (!empty($anexos)) {
+        foreach ($anexos as $e) {
+            $dataAnexos[] = array(
+                'nombre' => $e->nombreAnexo,
+                'url' =>'http://localhost/~mbravo/gestiondeProyectos/ServicioGP/public/'. $e->urlAnexo,
+                'tipo' =>$e->Tipoadjunto->tipoAdjunto
+
+
+            );
+        }
+    }
+
+    if ($proyecto != false) {
+        $data = array(
+            'id' => $proyecto->idProyecto,
+            'nombreProyecto' =>$proyecto->nombreProyecto,
+            'descripcionProyecto'=>$proyecto->descripcionProyecto,
+            'jefeProyecto'=>$proyecto ->jefeProyecto,
+            'bpProyecto'=>$proyecto->bpProyecto,
+            'fechaSolicitud'=>$proyecto->fechaSolicitud,
+            'fechaTermino'=>$proyecto->fechaTermino,
+            'nombreSolicitante'=>$proyecto->nombreSolicitante,
+            'idEmpresa'=>$proyecto->idEmpresa,
+            'nombreEmpresa'=>$proyecto->Empresas->nombreEmpresa,
+            'financiadoPor'=>$proyecto->financiadoPor,
+            'areaCliente'=>$proyecto->areaCliente,
+            'costoOneOff'=>$proyecto->costoOneOff,
+            'costoOnGoing'=>$proyecto->costoOnGoing,
+            'beneficios'=>$proyecto->beneficios,
+            'idStatusProyecto'=>$proyecto->idStatusProyecto,
+            'estatusProyecto'=>$proyecto->Statusproyecto->statusProyecto,
+            'idEtapaProyecto'=>$proyecto->idEtapaProyecto,
+            'etapaProyecto' =>$proyecto->Etapaproyecto->etapaProyecto,
+            'idSaludProyecto'=>$proyecto->idSaludProyecto,
+            'saludProyecto'=>$proyecto->Saludproyecto->saludProyecto,
+            'idTipoEstrategiaProyecto'=>$proyecto->idTipoEstrategiaProyecto,
+            'estrategiaProyecto'=>$proyecto->estrategiaProyecto->estrategiaProyecto,
+            'avance' => $proyecto ->avance,
+            'comentario' => $proyecto->comentarioAlcance,
+            'desviacionPresupuesto' => $proyecto ->desviacionPresupuesto,
+            'desviacionAlcance' =>  $proyecto ->desviacionAlcance,
+            'desviacionTiempo' =>$proyecto ->desviacionTiempo,
+            'anexos' =>$dataAnexos,
+            'programacion' => $dataProgramacion
+
+        );
+        $response->setStatusCode(200,'Ok');
+        $response ->setJsonContent(array(
+            'status'=>'FOUND',
+            'proyecto'=> $data
+
+         ));
+    }
+    else
+    {
+        $response->setStatusCode(409, "Conflict");
+        //Send errors to the client
+        $errors = array();
+        foreach ($proyecto->getMessages() as $message) {
+            $errors[] = $message->getMessage();
+        }
+        $response->setJsonContent(array('status' => 'ERROR', 'messages' => $errors));
+
+    }
+
+    return $response;
+
+});
+
+
+
+$app->post('/proyectos/{id}/avance', function($id) use ($app) {
+
+
+
+
+    $request = new \Phalcon\Http\Request();
+    $objHistorico= json_decode($request->get("proyecto"));
+
+
+    // $avance = $app->request->getJsonRawBody();
+    // Update Proyecto
+
+  $historico = new  Historialproyecto();
+
+    $historico->idProyecto = $id;
+        $historico->  fechaCreacion =date('Y-m-d H:i:s');
+          $historico->avance = $objHistorico->avance;
+          $historico->comentario = $objHistorico->comentario;
+          $historico->idSaludProyecto =$objHistorico->idSaludProyecto;
+          $historico->idEtapaProyecto =$objHistorico->idEtapaProyecto;
+          $historico->idStatusProyecto = $objHistorico->idStatusProyecto;
+          $historico->desviacionPresupuesto =$objHistorico->desviacionPresupuesto;
+          $historico->desviacionAlcance = $objHistorico->desviacionAlcance;
+          $historico->desviacionTiempo = $objHistorico->desviacionTiempo;
+
+    $response = new Phalcon\Http\Response();
+
+    //Check if the insertion was successful
+    if ($historico->create() != false) {
+
+        $proyecto = Proyecto::findFirst("idProyecto=" . $id);
+
+        if ($proyecto != false) {
+
+
+            $proyecto ->avance =$objHistorico->avance;
+            $proyecto -> comentarioAlcance = $objHistorico->comentario;
+            $proyecto ->idSaludProyecto = $objHistorico->idSaludProyecto;
+            $proyecto ->idEtapaProyecto= $objHistorico->idEtapaProyecto;
+            $proyecto ->idStatusProyecto = $objHistorico->idStatusProyecto;
+            $proyecto ->desviacionPresupuesto = $objHistorico->desviacionPresupuesto;
+            $proyecto ->desviacionAlcance = $objHistorico->desviacionAlcance;
+            $proyecto ->desviacionTiempo = $objHistorico->desviacionTiempo;
+
+            if ($proyecto->update() != false) {
+                $response->setStatusCode(201, "Created");
+
+
+
+
+
+                $response->setJsonContent(array('status' => 'OK' ));
+
+            }
+            else
+            {
+
+                $response->setStatusCode(409, "Conflict");
+
+                //Send errors to the client
+                $errors = array();
+                foreach ($status->getMessages() as $message) {
+                    $errors[] = $message->getMessage();
+                }
+
+                $response->setJsonContent(array('status' => 'ERROR', 'messages' =>$errors));
+
+            }
+        }
+
+        //Change the HTTP status
+
+
+    } else {
+
+        //Change the HTTP status
+        $response->setStatusCode(409, "Conflict");
+
+        //Send errors to the client
+        $errors = array();
+        foreach ($status->getMessages() as $message) {
+            $errors[] = $message->getMessage();
+        }
+
+        $response->setJsonContent(array('status' => 'ERROR', 'messages' => $errors));
+    }
+
+    return $response;
+});
+
+$app->get('/proyectos/{id}/avance', function ($id) use($app){
+
+    $response = new Phalcon\Http\Response();
+$historial = historialProyecto::findFirst(array("idProyecto=" . $id,"order"=>"fechaCreacion DESC"));
+
+    if ($historial != false) {
+        $data = array(
+
+            'idStatusProyecto'=>$historial->idStatusProyecto,
+            'estatusProyecto'=>$historial->Statusproyecto->statusProyecto,
+            'idEtapaProyecto'=>$historial->idEtapaProyecto,
+            'etapaProyecto' =>$historial->Etapaproyecto->etapaProyecto,
+            'idSaludProyecto'=>$historial->idSaludProyecto,
+           'saludProyecto'=>$historial->Saludproyecto->saludProyecto,
+            'avance' => $historial ->avance,
+            'comentario' => $historial->comentario,
+            'desviacionPresupuesto' => $historial ->desviacionPresupuesto,
+            'desviacionAlcance' =>  $historial ->desviacionAlcance,
+            'desviacionTiempo' =>$historial ->desviacionTiempo
+
+        );
+              $response ->setJsonContent(array(
+                  'status'=>'FOUND',
+                  'avance'=> $data
+              ));
+    }
+
+    return $response;
+
+
+});
+
+//trae el listado de proyectos para un usuario.
+$app->get('/{User}/proyectos', function ($User) use($app){
+
+
+    $phql = "select p.idProyecto, p.nombreProyecto,e.nombreEmpresa,p.fechaTermino,
+     p.costoOneoff,p.costoOnGoing,s.saludProyecto,es.statusProyecto, ep.etapaProyecto
+     from Proyecto p JOIN Empresas e JOIN Saludproyecto s JOIN Statusproyecto es JOIN
+     Etapaproyecto ep where jefeProyecto='" .$User ."'";
+    $proyectos = $app->modelsManager->executeQuery($phql);
+
+    $data = array();
+    $response = new Phalcon\Http\Response();
+    $response->setContentType('application/json', 'UTF-8');
+    if (!empty($proyectos)) {
+        foreach ($proyectos as $proyecto) {
+
+            $data[] = array(
+                'idProyecto' => $proyecto->idProyecto,
+                'nombreProyecto' => $proyecto->nombreProyecto,
+                'nombreEmpresa' => $proyecto->nombreEmpresa,
+                'fechaTermino' => $proyecto->fechaTermino,
+                'costoOneoff' => $proyecto->costoOneoff,
+                'costoOneGoing' => $proyecto->costoOnGoing,
+                'saludProyecto' => $proyecto->saludProyecto,
+                'statusProyecto' => $proyecto->statusProyecto,
+                'etapaProyecto' => $proyecto->etapaProyecto
+            );
+
+        }
+        $response ->setJsonContent(array(
+            'status'=>'FOUND',
+            'proyectos'=>$data
+        ));
+    }
+    else
+    {
+        $response->setJsonContent(array('status'=>'NOT-FOUND'));
+    }
+    return $response;
+});
+

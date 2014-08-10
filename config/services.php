@@ -36,3 +36,11 @@ $di['db'] = function() use ($config) {
 		"dbname" => $config->database->dbname
 	));
 };
+
+
+//Session Start
+$di->setShared('session', function() {
+    $session = new Phalcon\Session\Adapter\Files();
+    $session->start();
+    return $session;
+});

@@ -10,6 +10,13 @@ class Anexos extends \Phalcon\Mvc\Model
      *
      * @var integer
      */
+    public $idProyecto;
+
+
+    /**
+     *
+     * @var integer
+     */
     public $idAnexos;
      
     /**
@@ -42,12 +49,7 @@ class Anexos extends \Phalcon\Mvc\Model
      */
     public $fechaCreacion;
      
-    /**
-     *
-     * @var integer
-     */
-    public $idProyecto;
-     
+
     /**
      *
      * @var string
@@ -57,6 +59,7 @@ class Anexos extends \Phalcon\Mvc\Model
     public function initialize()
     {
         $this->belongsTo("idTipoAnexo", "Tipoadjunto", "idtipoAdjunto");
+        $this->belongsTo("idProyecto", "Proyecto", "idProyecto");
 
 
     }

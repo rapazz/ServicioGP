@@ -170,6 +170,11 @@ public $desviacionTiempo;
         return $this->getRelated('Planificacion', $parameters);
     }
 
+    public function getAnexos($parameters=null)
+    {
+        return $this->getRelated('Anexos', $parameters);
+    }
+
 public function initialize()
 {
     $this->belongsTo("idEmpresa", "Empresas", "idEmpresa");
@@ -179,6 +184,8 @@ public function initialize()
     $this->belongsTo("idTipoEstrategiaProyecto", "estrategiaProyecto", "idEstrategia");
 
     $this->belongsTo("idProyecto", "Planificacion", "idproyecto");
+    $this->hasMany("idProyecto", "Anexos", "idProyecto");
+
 
 }
 }
